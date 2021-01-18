@@ -6,8 +6,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-
-	"gitlab.com/NebulousLabs/Sia/types"
 )
 
 func (n *NanoS) GetVersion() (version string, err error) {
@@ -21,29 +19,31 @@ func (n *NanoS) GetVersion() (version string, err error) {
 	return fmt.Sprintf("v%d.%d.%d", resp[0], resp[1], resp[2]), nil
 }
 
-func (n *NanoS) GetAddress(index uint32) (addr types.UnlockHash, err error) {
+func (n *NanoS) GetAddress(index uint32) (addr string, err error) {
 	encIndex := make([]byte, 4)
 	binary.LittleEndian.PutUint32(encIndex, index)
 
 	resp, err := n.Exchange(cmdGetAddress, 0, 0, nil)
 	if err != nil {
-		return types.UnlockHash{}, err
+		return
 	}
 	fmt.Printf("address %v\n", resp[:])
 	fmt.Println("\n", string(resp[:]))
 	// fmt.Println("address:", string(resp))
+	addr = string(resp[:])
 	return
 }
 
-func (n *NanoS) GetPrivateKey(index uint32) (addr types.UnlockHash, err error) {
+func (n *NanoS) GetPrivateKey(index uint32) (priv string, err error) {
 	encIndex := make([]byte, 4)
 	binary.LittleEndian.PutUint32(encIndex, index)
 
 	resp, err := n.Exchange(cmdGetPrivateKey, 0, p2DisplayAddress, encIndex)
 	if err != nil {
-		return types.UnlockHash{}, err
+		return
 	}
 	fmt.Println("privatekey:", string(resp))
+	priv = string(resp)
 	// err = addr.LoadString(string(resp[32:]))
 	return
 }
