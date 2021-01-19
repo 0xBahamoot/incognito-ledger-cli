@@ -169,17 +169,11 @@ const (
 	cmdGetViewKey       = 0x03
 	cmdGetPrivateKey    = 0x04
 	cmdImportPrivateKey = 0x05
-	cmdGenCommitment    = 0x06
-	cmdGenOTA           = 0x07
-	cmdGenRingSig       = 0x08
-	cmdGenProof         = 0x09
-	cmdGenAssetTag      = 0x10
-	cmdKeyImage         = 0x11
-	cmdSignMetaData     = 0x12
-	cmdGetOTAKey        = 0x13
-	cmdEncryptCoin      = 0x50
-	cmdDecryptCoin      = 0x51
-	cmdGetValidatorKey  = 0x90
+	cmdGetOTAKey        = 0x06
+	cmdGetValidatorKey  = 0x07
+	cmdKeyImage         = 0x10
+	cmdGenRingSig       = 0x20
+	cmdSignMetaData     = 0x21
 	cmdTrustDevice      = 0x60
 
 	p1First = 0x00

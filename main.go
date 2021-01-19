@@ -66,30 +66,25 @@ Actions:
 	debugUsage = `print raw APDU exchanges`
 
 	versionUsage = `Usage:
-	sialedger version
+	incognitoledger version
 
-Prints the version of the sialedger binary, as well as the version reported by
-the Sia Ledger Nano S app (if available).
+Prints the version of the incognitoledger binary, as well as the version reported by
+the Incognito Ledger Nano S app (if available).
 `
 	addrUsage = `Usage:
-	sialedger addr [key index]
+	incognitoledger addr [key index]
 
 Generates an address using the public key with the specified index.
 `
-	privUsage          = ``
-	viewKeyUsage       = ``
-	importPrivUsage    = ``
-	genCommitmentUsage = ``
-	genOTAUsage        = ``
-	genRingSigUsage    = ``
-	genProofUsage      = ``
-	genAssetTagUsage   = ``
-	genKeyImageUsage   = ``
-	encryptCoinUsage   = ``
-	decryptCoinUsage   = ``
-	getValidatorUsage  = ``
-	getOTAKeyUsage     = ``
-	trustDeviceUsage   = ``
+	privUsage         = ``
+	viewKeyUsage      = ``
+	importPrivUsage   = ``
+	getOTAKeyUsage    = ``
+	getValidatorUsage = ``
+	genKeyImageUsage  = ``
+	genRingSigUsage   = ``
+	signMetaUsage     = ``
+	trustDeviceUsage  = ``
 )
 
 func main() {
@@ -103,16 +98,11 @@ func main() {
 	privCmd := flagg.New("priv", privUsage)
 	getViewKeyCmd := flagg.New("view", viewKeyUsage)
 	importPrivateKeyCmd := flagg.New("importpriv", importPrivUsage)
-	genCommitmentCmd := flagg.New("gencommitment", genCommitmentUsage)
-	genOTACmd := flagg.New("genota", genOTAUsage)
-	genRingSigCmd := flagg.New("genringsig", genRingSigUsage)
-	genProofCmd := flagg.New("genproof", genProofUsage)
-	genAssetTagCmd := flagg.New("genassettag", genAssetTagUsage)
-	genKeyImageCmd := flagg.New("genkeyimage", genKeyImageUsage)
-	encryptCoinCmd := flagg.New("encoin", encryptCoinUsage)
-	decryptCoinCmd := flagg.New("decoin", decryptCoinUsage)
-	getValidatorCmd := flagg.New("getvalidator", getValidatorUsage)
 	getOTAKeyCmd := flagg.New("ota", getOTAKeyUsage)
+	getValidatorCmd := flagg.New("getvalidator", getValidatorUsage)
+	genRingSigCmd := flagg.New("genringsig", genRingSigUsage)
+	genKeyImageCmd := flagg.New("genkeyimage", genKeyImageUsage)
+	signMetaCmd := flagg.New("signmeta", signMetaUsage)
 	trustDeviceCmd := flagg.New("trust", trustDeviceUsage)
 	cmd := flagg.Parse(flagg.Tree{
 		Cmd: rootCmd,
@@ -122,14 +112,8 @@ func main() {
 			{Cmd: privCmd},
 			{Cmd: getViewKeyCmd},
 			{Cmd: importPrivateKeyCmd},
-			{Cmd: genCommitmentCmd},
-			{Cmd: genOTACmd},
 			{Cmd: genRingSigCmd},
-			{Cmd: genProofCmd},
-			{Cmd: genAssetTagCmd},
 			{Cmd: genKeyImageCmd},
-			{Cmd: encryptCoinCmd},
-			{Cmd: decryptCoinCmd},
 			{Cmd: getValidatorCmd},
 			{Cmd: getOTAKeyCmd},
 			{Cmd: trustDeviceCmd},
@@ -195,43 +179,8 @@ func main() {
 		if err != nil {
 			log.Fatalln(err)
 		}
-	case genCommitmentCmd:
-		err := nanos.GenCommitment()
-		if err != nil {
-			log.Fatalln(err)
-		}
-	case genOTACmd:
-		err := nanos.GenOTA()
-		if err != nil {
-			log.Fatalln(err)
-		}
-	case genRingSigCmd:
-		err := nanos.GenRingSig()
-		if err != nil {
-			log.Fatalln(err)
-		}
-	case genProofCmd:
-		err := nanos.GenProof()
-		if err != nil {
-			log.Fatalln(err)
-		}
-	case genAssetTagCmd:
-		err := nanos.GenAssetTag()
-		if err != nil {
-			log.Fatalln(err)
-		}
-	case genKeyImageCmd:
-		err := nanos.GenKeyImage()
-		if err != nil {
-			log.Fatalln(err)
-		}
-	case encryptCoinCmd:
-		err := nanos.EncryptCoin()
-		if err != nil {
-			log.Fatalln(err)
-		}
-	case decryptCoinCmd:
-		err := nanos.DecryptCoin()
+	case getOTAKeyCmd:
+		err := nanos.GetValidatorKey()
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -240,11 +189,18 @@ func main() {
 		if err != nil {
 			log.Fatalln(err)
 		}
-	case getOTAKeyCmd:
-		err := nanos.GetValidatorKey()
+	case genKeyImageCmd:
+		err := nanos.GenKeyImage()
 		if err != nil {
 			log.Fatalln(err)
 		}
+	case genRingSigCmd:
+		err := nanos.GenRingSig()
+		if err != nil {
+			log.Fatalln(err)
+		}
+	case signMetaCmd:
+
 	case trustDeviceCmd:
 		err := nanos.TrustDevice()
 		if err != nil {
