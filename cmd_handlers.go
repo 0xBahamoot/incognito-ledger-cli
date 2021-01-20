@@ -27,9 +27,7 @@ func (n *NanoS) GetAddress(index uint32) (addr string, err error) {
 	if err != nil {
 		return
 	}
-	fmt.Printf("address %v\n", resp[:])
-	fmt.Println("\n", string(resp[:]))
-	// fmt.Println("address:", string(resp))
+	fmt.Printf("address %v\n", string(resp[:]))
 	addr = string(resp[:])
 	return
 }
@@ -44,7 +42,6 @@ func (n *NanoS) GetPrivateKey(index uint32) (priv string, err error) {
 	}
 	fmt.Println("privatekey:", string(resp))
 	priv = string(resp)
-	// err = addr.LoadString(string(resp[32:]))
 	return
 }
 
@@ -126,8 +123,8 @@ func (n *NanoS) SignMetadata() error {
 	return nil
 }
 
-func (n *NanoS) TrustDevice() error {
-	resp, err := n.Exchange(cmdTrustDevice, 0, 0, nil)
+func (n *NanoS) TrustHost() error {
+	resp, err := n.Exchange(cmdTrustHost, 0, 0, nil)
 	if err != nil {
 		return err
 	}
@@ -136,6 +133,9 @@ func (n *NanoS) TrustDevice() error {
 }
 
 func (n *NanoS) CreateTx() error {
-
+	err := n.TrustHost()
+	if err != nil {
+		return err
+	}
 	return nil
 }

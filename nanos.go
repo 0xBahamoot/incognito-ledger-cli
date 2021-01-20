@@ -3,13 +3,10 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
 )
-
-var DEBUG bool
 
 type hidFramer struct {
 	rw  io.ReadWriter
@@ -23,9 +20,6 @@ func (hf *hidFramer) Reset() {
 }
 
 func (hf *hidFramer) Write(p []byte) (int, error) {
-	if DEBUG {
-		fmt.Println("HID <=", hex.EncodeToString(p))
-	}
 	// split into 64-byte chunks
 	chunk := make([]byte, 64)
 	binary.BigEndian.PutUint16(chunk[:2], 0x0101)
@@ -110,12 +104,9 @@ func (af *apduFramer) Exchange(apdu APDU) ([]byte, error) {
 	// read APDU payload
 	respLen := binary.BigEndian.Uint16(af.buf[:2])
 	resp := make([]byte, respLen)
-	n, _ := io.ReadFull(af.hf, resp)
-	if DEBUG {
-		fmt.Println("HID =>", respLen, n, hex.EncodeToString(resp))
-	}
+	_, err := io.ReadFull(af.hf, resp)
 
-	return resp, nil
+	return resp, err
 }
 
 type NanoS struct {
@@ -159,7 +150,7 @@ func (n *NanoS) Exchange(cmd byte, p1, p2 byte, data []byte) (resp []byte, err e
 	// 	err = errInvalidParam
 	// default:
 	// 	err = ErrCode(code)
-	// }
+	// }z
 	return
 }
 
@@ -174,7 +165,7 @@ const (
 	cmdKeyImage         = 0x10
 	cmdGenRingSig       = 0x20
 	cmdSignMetaData     = 0x21
-	cmdTrustDevice      = 0x60
+	cmdTrustHost        = 0x60
 
 	p1First = 0x00
 	p1More  = 0x80

@@ -16,16 +16,13 @@ func OpenNanoS() (*NanoS, error) {
 	const (
 		ledgerVendorID       = 0x2c97
 		ledgerNanoSProductID = 0x0001
-		//ledgerUsageID        = 0xffa0
 	)
 
 	// search for Nano S
 	devices := hid.Enumerate(ledgerVendorID, ledgerNanoSProductID)
 	if len(devices) == 0 {
 		return nil, errors.New("Nano S not detected")
-	} // else if len(devices) > 1 {
-	// 	return nil, errors.New("Unexpected error -- Is the Incognito wallet app running?")
-	// }
+	}
 
 	// open the device
 	device, err := devices[0].Open()
@@ -63,7 +60,6 @@ Actions:
     hash            sign a trusted hash
     txn             sign a transaction
 `
-	debugUsage = `print raw APDU exchanges`
 
 	versionUsage = `Usage:
 	incognitoledger version
@@ -84,14 +80,13 @@ Generates an address using the public key with the specified index.
 	genKeyImageUsage  = ``
 	genRingSigUsage   = ``
 	signMetaUsage     = ``
-	trustDeviceUsage  = ``
+	TrustHostUsage    = ``
 )
 
 func main() {
 	log.SetFlags(0)
 	rootCmd := flagg.Root
 	rootCmd.Usage = flagg.SimpleUsage(rootCmd, rootUsage)
-	rootCmd.BoolVar(&DEBUG, "apdu", false, debugUsage)
 
 	versionCmd := flagg.New("version", versionUsage)
 	addrCmd := flagg.New("addr", addrUsage)
@@ -103,7 +98,7 @@ func main() {
 	genRingSigCmd := flagg.New("genringsig", genRingSigUsage)
 	genKeyImageCmd := flagg.New("genkeyimage", genKeyImageUsage)
 	signMetaCmd := flagg.New("signmeta", signMetaUsage)
-	trustDeviceCmd := flagg.New("trust", trustDeviceUsage)
+	trustHostCmd := flagg.New("trust", TrustHostUsage)
 	cmd := flagg.Parse(flagg.Tree{
 		Cmd: rootCmd,
 		Sub: []flagg.Tree{
@@ -116,7 +111,7 @@ func main() {
 			{Cmd: genKeyImageCmd},
 			{Cmd: getValidatorCmd},
 			{Cmd: getOTAKeyCmd},
-			{Cmd: trustDeviceCmd},
+			{Cmd: trustHostCmd},
 		},
 	})
 	args := cmd.Args()
@@ -200,9 +195,12 @@ func main() {
 			log.Fatalln(err)
 		}
 	case signMetaCmd:
-
-	case trustDeviceCmd:
-		err := nanos.TrustDevice()
+		err := nanos.SignMetadata()
+		if err != nil {
+			log.Fatalln(err)
+		}
+	case trustHostCmd:
+		err := nanos.TrustHost()
 		if err != nil {
 			log.Fatalln(err)
 		}
