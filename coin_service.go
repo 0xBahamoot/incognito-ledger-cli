@@ -18,3 +18,7 @@ func getAccountBalance(accountName string) (map[string]uint64, error) {
 	result := make(map[string]uint64)
 	return result, nil
 }
+
+func importAccount() error {
+	return nil
+}

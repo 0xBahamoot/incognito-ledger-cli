@@ -6,7 +6,37 @@ import (
 	"errors"
 	"fmt"
 	"io"
+
+	"github.com/zondax/hid"
 )
+
+func OpenNanoS() (*NanoS, error) {
+	const (
+		ledgerVendorID       = 0x2c97
+		ledgerNanoSProductID = 0x0001
+	)
+
+	// search for Nano S
+	devices := hid.Enumerate(ledgerVendorID, ledgerNanoSProductID)
+	if len(devices) == 0 {
+		return nil, errors.New("Nano S not detected")
+	}
+
+	// open the device
+	device, err := devices[0].Open()
+	if err != nil {
+		return nil, err
+	}
+
+	// wrap raw device I/O in HID+APDU protocols
+	return &NanoS{
+		device: &apduFramer{
+			hf: &hidFramer{
+				rw: device,
+			},
+		},
+	}, nil
+}
 
 type hidFramer struct {
 	rw  io.ReadWriter

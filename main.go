@@ -1,54 +1,12 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
-	"math"
 	"os"
-	"strconv"
 
-	"github.com/karalabe/hid"
 	"lukechampine.com/flagg"
 )
-
-func OpenNanoS() (*NanoS, error) {
-	const (
-		ledgerVendorID       = 0x2c97
-		ledgerNanoSProductID = 0x0001
-	)
-
-	// search for Nano S
-	devices := hid.Enumerate(ledgerVendorID, ledgerNanoSProductID)
-	if len(devices) == 0 {
-		return nil, errors.New("Nano S not detected")
-	}
-
-	// open the device
-	device, err := devices[0].Open()
-	if err != nil {
-		return nil, err
-	}
-
-	// wrap raw device I/O in HID+APDU protocols
-	return &NanoS{
-		device: &apduFramer{
-			hf: &hidFramer{
-				rw: device,
-			},
-		},
-	}, nil
-}
-
-func parseIndex(s string) uint32 {
-	index, err := strconv.ParseUint(s, 10, 32)
-	if err != nil {
-		log.Fatalln("Couldn't parse index:", err)
-	} else if index > math.MaxUint32 {
-		log.Fatalf("Index too large (max %v)", math.MaxUint32)
-	}
-	return uint32(index)
-}
 
 const (
 	rootUsage = `Usage:
@@ -115,7 +73,7 @@ func main() {
 		},
 	})
 	args := cmd.Args()
-
+	fmt.Println("args", args)
 	var nanos *NanoS
 	if cmd != rootCmd && cmd != versionCmd {
 		var err error
