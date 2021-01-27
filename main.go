@@ -38,7 +38,11 @@ Generates an address using the public key with the specified index.
 	genKeyImageUsage  = ``
 	genRingSigUsage   = ``
 	signMetaUsage     = ``
-	TrustHostUsage    = ``
+	trustHostUsage    = ``
+
+	listAccountUsage   = ``
+	getBalanceUsage    = ``
+	updateBalanceUsage = ``
 )
 
 func main() {
@@ -56,7 +60,10 @@ func main() {
 	genRingSigCmd := flagg.New("genringsig", genRingSigUsage)
 	genKeyImageCmd := flagg.New("genkeyimage", genKeyImageUsage)
 	signMetaCmd := flagg.New("signmeta", signMetaUsage)
-	trustHostCmd := flagg.New("trust", TrustHostUsage)
+	trustHostCmd := flagg.New("trust", trustHostUsage)
+	listAccountCmd := flagg.New("listaccount", listAccountUsage)
+	getBalanceCmd := flagg.New("getbalance", getBalanceUsage)
+	updateBalanceCmd := flagg.New("updatebalance", updateBalanceUsage)
 	cmd := flagg.Parse(flagg.Tree{
 		Cmd: rootCmd,
 		Sub: []flagg.Tree{
@@ -70,15 +77,20 @@ func main() {
 			{Cmd: getValidatorCmd},
 			{Cmd: getOTAKeyCmd},
 			{Cmd: trustHostCmd},
+			{Cmd: listAccountCmd},
+			{Cmd: getBalanceCmd},
+			{Cmd: updateBalanceCmd},
 		},
 	})
 	args := cmd.Args()
 	fmt.Println("args", args)
+	readConfig()
 	var nanos *NanoS
-	if cmd != rootCmd && cmd != versionCmd {
+	if cmd != rootCmd && cmd != versionCmd && cmd != listAccountCmd && cmd != getBalanceCmd && cmd != updateBalanceCmd {
 		var err error
 		nanos, err = OpenNanoS()
 		if err != nil {
+			log.Println("This cmd require connected to ledger device")
 			log.Fatalln("Couldn't open device:", err)
 		}
 	}
@@ -162,5 +174,27 @@ func main() {
 		if err != nil {
 			log.Fatalln(err)
 		}
+	case listAccountCmd:
+		result, err := getAccountList()
+		if err != nil {
+			log.Fatalln(err)
+		}
+		for name, addr := range result {
+			fmt.Printf("%s: %s", name, addr)
+		}
+	case getBalanceCmd:
+		account := args[0]
+		result, err := getAccountBalance(account)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		fmt.Println(result)
+	case updateBalanceCmd:
+		account := args[0]
+		result, err := updateBalanceFlow(account)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		fmt.Println(result)
 	}
 }

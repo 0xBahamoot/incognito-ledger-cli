@@ -139,3 +139,13 @@ func (n *NanoS) CreateTx() error {
 	}
 	return nil
 }
+
+func updateBalanceFlow(account string) (int, error) {
+	var coinUpdated int
+	keyimages, err := getEncryptKeyImages(account)
+	if err != nil {
+		return 0, err
+	}
+	fmt.Println(keyimages)
+	return coinUpdated, nil
+}
