@@ -24,7 +24,7 @@ func getAccountList() (map[string]string, error) {
 	return result, nil
 }
 
-func submitKeyimages(km map[string][]byte) error {
+func submitKeyimages(tokenID string, account string, km map[string][]byte) error {
 	return nil
 }
 
