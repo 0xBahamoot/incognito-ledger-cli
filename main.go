@@ -155,7 +155,7 @@ func main() {
 			log.Fatalln(err)
 		}
 	case genKeyImageCmd:
-		err := nanos.GenKeyImage()
+		_, err := nanos.GenKeyImage("sdf", "sdf")
 		if err != nil {
 			log.Fatalln(err)
 		}

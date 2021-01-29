@@ -6,6 +6,9 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"log"
+
+	"github.com/incognitochain/incognito-chain/common"
 )
 
 func (n *NanoS) GetVersion() (version string, err error) {
@@ -81,19 +84,26 @@ func (n *NanoS) ImportPrivateKey() error {
 	return nil
 }
 
-func (n *NanoS) GenKeyImage() error {
+func (n *NanoS) GenKeyImage(coinPubkey string, encryptKm string) (string, error) {
 	buf := new(bytes.Buffer)
-	bs, _ := hex.DecodeString("c4541151e39bb43e7b00ad6a1d999d609f5939ca622a9db7b7391c5190eea909")
+	// bs, _ := hex.DecodeString("c4541151e39bb43e7b00ad6a1d999d609f5939ca622a9db7b7391c5190eea909")
+	bs, err := hex.DecodeString(encryptKm)
+	if err != nil {
+		panic(err)
+	}
 	buf.Write(bs)
-	bs1, _ := hex.DecodeString("17fd6aff8fecd18243af1a83dab0e47ca5fafec256ba497b3136a6b3f68eecb1")
+	// bs1, _ := hex.DecodeString("17fd6aff8fecd18243af1a83dab0e47ca5fafec256ba497b3136a6b3f68eecb1")
+	bs1, err := hex.DecodeString(coinPubkey)
+	if err != nil {
+		panic(err)
+	}
 	buf.Write(bs1)
 
 	resp, err := n.Exchange(cmdKeyImage, 0, 0, buf.Next(255))
 	if err != nil {
-		return err
+		return "", err
 	}
-	fmt.Println("I", hex.EncodeToString(resp))
-	return nil
+	return hex.EncodeToString(resp), nil
 }
 
 func (n *NanoS) GenRingSig() error {
@@ -141,11 +151,38 @@ func (n *NanoS) CreateTx() error {
 }
 
 func updateBalanceFlow(account string) (int, error) {
+	nanos, err := OpenNanoS()
+	if err != nil {
+		log.Println("This cmd require connected to ledger device")
+		log.Fatalln("Couldn't open device:", err)
+	}
 	var coinUpdated int
 	keyimages, err := getEncryptKeyImages(account)
 	if err != nil {
 		return 0, err
 	}
 	fmt.Println(keyimages)
+
+	err = nanos.TrustHost()
+	if err != nil {
+		return 0, err
+	}
+	decryptedKeyimages := make(map[string]string)
+	for _, coinList := range keyimages {
+		for coinPk, km := range coinList {
+			dekm, err := nanos.GenKeyImage(coinPk, km)
+			if err != nil {
+				panic(err)
+			}
+			decryptedKeyimages[coinPk] = dekm
+			fmt.Println("decryptedKeyimages[coinPk]", coinPk, dekm)
+		}
+	}
+
+	e := submitKeyimages(common.PRVCoinID.String(), "testacc", decryptedKeyimages)
+	if err != nil {
+		panic(e)
+	}
+
 	return coinUpdated, nil
 }
