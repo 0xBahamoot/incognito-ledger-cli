@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+
+	"github.com/gorilla/websocket"
 )
 
 func getAccountList() (map[string]string, error) {
@@ -100,4 +102,13 @@ func getAccountBalance(accountName string) (map[string]uint64, error) {
 
 func importAccount() error {
 	return nil
+}
+
+func createTx() {
+
+	c, _, err := websocket.DefaultDialer.Dial("ws://"+COINDAEMONADDR+"/createtx", nil)
+	if err != nil {
+		log.Fatal("dial:", err)
+	}
+	defer c.Close()
 }
