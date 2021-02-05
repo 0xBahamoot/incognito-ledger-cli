@@ -7,6 +7,9 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -104,11 +107,74 @@ func importAccount() error {
 	return nil
 }
 
-func createTx() {
+type LedgerRequest struct {
+	Cmd  string
+	Data []byte
+}
 
+func requestCreateTx(txjson []byte, n *NanoS) error {
 	c, _, err := websocket.DefaultDialer.Dial("ws://"+COINDAEMONADDR+"/createtx", nil)
 	if err != nil {
 		log.Fatal("dial:", err)
 	}
 	defer c.Close()
+
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt)
+
+	sendMsgCh := make(chan []byte)
+	done := make(chan struct{})
+
+	go func() {
+		sendMsgCh <- txjson
+		defer close(done)
+		for {
+			_, message, err := c.ReadMessage()
+			if err != nil {
+				log.Println("read:", err)
+				return
+			}
+			var req LedgerRequest
+			err = json.Unmarshal(message, &req)
+			if err != nil {
+				log.Println("read:", err)
+				return
+			}
+			//TODO
+			switch req.Cmd {
+			case "signschnorr":
+			case "createringsig":
+			case "result":
+			default:
+				log.Println("unknown command")
+			}
+		}
+	}()
+	for {
+		select {
+		case <-done:
+			return nil
+		case msg := <-sendMsgCh:
+			err := c.WriteMessage(websocket.TextMessage, msg)
+			if err != nil {
+				log.Println("write:", err)
+				return err
+			}
+		case <-interrupt:
+			log.Println("interrupt")
+
+			// Cleanly close the connection by sending a close message and then
+			// waiting (with timeout) for the server to close the connection.
+			err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+			if err != nil {
+				log.Println("write close:", err)
+				return err
+			}
+			select {
+			case <-done:
+			case <-time.After(time.Second):
+			}
+			return nil
+		}
+	}
 }
