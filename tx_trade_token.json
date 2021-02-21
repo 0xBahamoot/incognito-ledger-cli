@@ -1,6 +1,6 @@
 {
     "account": "testacc",
-    "type": "contribution",
+    "type": "trade_token",
     "privatekey":"111111bgk2j6vZQvzq8tkonDLLXEvLkMwBMn5BoLXLpf631boJnPDGEQMGvA1pRfT71Crr7MM2ShvpkxCBWBL2icG22cXSpcKybKCQmaxa",
     "params":""
 }

@@ -158,7 +158,7 @@ var errInvalidParam = errors.New("invalid request parameters")
 
 func (n *NanoS) Exchange(cmd byte, p1, p2 byte, data []byte) (resp []byte, err error) {
 	resp, err = n.device.Exchange(APDU{
-		CLA:     0xE0,
+		CLA:     cla,
 		INS:     cmd,
 		P1:      p1,
 		P2:      p2,
@@ -168,6 +168,9 @@ func (n *NanoS) Exchange(cmd byte, p1, p2 byte, data []byte) (resp []byte, err e
 		return nil, err
 	} else if len(resp) < 2 {
 		return nil, errors.New("APDU response missing status code")
+	}
+	if len(resp) == 2 {
+		return resp, nil
 	}
 	// code := binary.BigEndian.Uint16(resp[len(resp)-2:])
 	resp = resp[0 : len(resp)-2]
@@ -193,9 +196,14 @@ const (
 	cmdGetOTAKey        = 0x06
 	cmdGetValidatorKey  = 0x07
 	cmdKeyImage         = 0x10
-	cmdGenRingSig       = 0x20
-	cmdSignMetaData     = 0x21
-	cmdTrustHost        = 0x60
+	// gen ring sig cmds set
+	cmdGenAlpha          = 0x21
+	cmdCalculateC        = 0x22
+	cmdCalculateR        = 0x23
+	cmdGenCoinPrivateKey = 0x24
+
+	cmdSignSchnorr = 0x40
+	cmdTrustHost   = 0x60
 
 	p1First = 0x00
 	p1More  = 0x80
@@ -204,4 +212,6 @@ const (
 	p2DisplayPubkey  = 0x01
 	p2DisplayHash    = 0x00
 	p2SignHash       = 0x01
+
+	cla = 0xE0
 )

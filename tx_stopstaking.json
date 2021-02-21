@@ -1,5 +1,17 @@
 {
     "account": "testacc",
     "type": "stopstaking",
-    "params":""
+    "privatekey":"111111bgk2j6vZQvzq8tkonDLLXEvLkMwBMn5BoLXLpf631boJnPDGEQMGvA1pRfT71Crr7MM2ShvpkxCBWBL2icG22cXSpcKybKCQmaxa",
+    "params":[
+        {
+            "12RxahVABnAVCGP3LGwCn8jkQxgw7z1x14wztHzn455TTVpi1wBq9YGwkRMQg3J4e657AbAnCvYCJSdA9czBUNuCKwGSRQt55Xwz8WA": 0
+        },
+        -1,
+        0,
+        {
+            "StopAutoStakingType": 127,
+            "CandidatePaymentAddress": "12su5Urq6hucGGNEdk37RXJW1mY2LAGcrgjdYJ4uhzj9K4F47SRFSkLSzCcz7uJ2mAUTwnrA5mkaCvzobTc6ceocdNAhRQgZeveaLQmMkxJqueSYm9gKkNV39ba1CvR5n3Euig9gNLeP1TkwonfZ",
+            "PrivateSeed": "12RSZtqh94sf6F8UifhqNZ4TrQYozvd4VRPwPcz7pMEbuzfee37"
+        }
+    ]
 }

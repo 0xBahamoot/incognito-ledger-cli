@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/incognitochain/incognito-chain/common"
+	"github.com/incognitochain/incognito-chain/privacy/operation"
 )
 
 func (n *NanoS) GetVersion() (version string, err error) {
@@ -106,15 +106,94 @@ func (n *NanoS) GenKeyImage(coinPubkey string, encryptKm string) (string, error)
 	return hex.EncodeToString(resp), nil
 }
 
-func (n *NanoS) GenRingSig() error {
-	resp, err := n.Exchange(cmdGenRingSig, 0, 0, nil)
+// var tmpAlpha = []*operation.Scalar{}
+
+//This func contain a set of commands for ledger
+func (n *NanoS) GenerateAlpha(alphaLength int) error {
+	// tmpAlpha = []*operation.Scalar{}
+	resp, err := n.Exchange(cmdGenAlpha, byte(alphaLength), 0, nil)
 	if err != nil {
 		return err
 	}
-	_ = resp
+	for i := 0; i < alphaLength; i++ {
+		alpha := operation.Scalar{}
+		alpha.FromBytesS(resp[i*32 : (i+1)*32])
+		fmt.Println("alpha", alpha.ToBytesS())
+		// tmpAlpha = append(tmpAlpha, &alpha)
+	}
+	// buf := new(bytes.Buffer)
+	// for i := 0; i < alphaLength; i += 1 {
+	// 	alpha := operation.RandomScalar()
+	// 	tmpAlpha = append(tmpAlpha, alpha)
+	// 	buf.Write(alpha.ToBytesS())
+	// }
+	// _, err := n.Exchange(cmdGenAlpha, byte(alphaLength), 0, buf.Next(255))
+	// if err != nil {
+	// 	return err
+	// }
 	return nil
 }
 
+func (n *NanoS) CalculateFirstC(Rpi [][]byte, PedComG []byte) ([]byte, error) {
+	var result []byte
+	buf := new(bytes.Buffer)
+	for i := 0; i < len(Rpi)-1; i++ {
+		buf.Reset()
+		buf.Write(Rpi[i])
+		resp, err := n.Exchange(cmdCalculateC, 0, byte(i), buf.Next(255))
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, resp...)
+		fmt.Println("CalculateFirstC", i, "success")
+	}
+
+	buf.Reset()
+	buf.Write(PedComG)
+	resp, err := n.Exchange(cmdCalculateC, 1, byte(len(Rpi)-1), buf.Next(255))
+	if err != nil {
+		return nil, err
+	}
+	result = append(result, resp...)
+	return result, nil
+}
+
+func (n *NanoS) CalculateR(coinLength int, cPi []byte) ([][]byte, error) {
+	buf := new(bytes.Buffer)
+	new_rPi := make([][]byte, coinLength)
+	for idx := 0; idx < coinLength; idx++ {
+		buf.Reset()
+		buf.Write(cPi)
+		resp, err := n.Exchange(cmdCalculateR, 0, byte(idx), buf.Next(255))
+		if err != nil {
+			return nil, err
+		}
+		fmt.Println("CalculateR success", resp)
+		new_rPi[idx] = resp
+	}
+	return new_rPi, nil
+}
+
+func (n *NanoS) GenCoinPrivateKey(coinsH [][]byte) error {
+	buf := new(bytes.Buffer)
+	for idx, coinH := range coinsH {
+		buf.Reset()
+		buf.Write(coinH)
+		if idx == len(coinsH)-1 { //add sumRand privkey
+			_, err := n.Exchange(cmdGenCoinPrivateKey, 1, byte(idx), buf.Next(255))
+			if err != nil {
+				return err
+			}
+		} else {
+			_, err := n.Exchange(cmdGenCoinPrivateKey, 0, byte(idx), buf.Next(255))
+			if err != nil {
+				return err
+			}
+		}
+		fmt.Println("GenCoinPrivateKey success", idx)
+	}
+	return nil
+}
 func (n *NanoS) GetValidatorKey() error {
 	resp, err := n.Exchange(cmdGetValidatorKey, 0, 0, nil)
 	if err != nil {
@@ -124,13 +203,20 @@ func (n *NanoS) GetValidatorKey() error {
 	return nil
 }
 
-func (n *NanoS) SignMetadata() error {
-	resp, err := n.Exchange(cmdSignMetaData, 0, 0, nil)
+func (n *NanoS) SignSchnorr(pedRandom []byte, pedPrivate []byte, randomness []byte, message []byte) ([]byte, error) {
+	buf := new(bytes.Buffer)
+	buf.Write(pedRandom)
+	buf.Write(pedPrivate)
+	buf.Write(randomness)
+	buf.Write(message)
+
+	resp, err := n.Exchange(cmdSignSchnorr, 0, 0, buf.Next(255))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	fmt.Printf("sig: %s\n", hex.EncodeToString(resp))
-	return nil
+
+	return resp, nil
 }
 
 func (n *NanoS) TrustHost() error {
@@ -139,15 +225,6 @@ func (n *NanoS) TrustHost() error {
 		return err
 	}
 	_ = resp
-	return nil
-}
-
-func (n *NanoS) CreateTx() error {
-	err := n.TrustHost()
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -168,21 +245,26 @@ func updateBalanceFlow(account string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	decryptedKeyimages := make(map[string]string)
-	for _, coinList := range keyimages {
+	decryptedKeyimages := make(map[string]map[string]string)
+	tokenIDs := []string{}
+	for tokenID, coinList := range keyimages {
+		tokenIDs = append(tokenIDs, tokenID)
+		decryptedKeyimages[tokenID] = make(map[string]string)
 		for coinPk, km := range coinList {
 			dekm, err := nanos.GenKeyImage(coinPk, km)
 			if err != nil {
 				panic(err)
 			}
-			decryptedKeyimages[coinPk] = dekm
+			decryptedKeyimages[tokenID][coinPk] = dekm
 			fmt.Println("decryptedKeyimages[coinPk]", coinPk, dekm)
 		}
 	}
 
-	e := submitKeyimages(common.PRVCoinID.String(), "testacc", decryptedKeyimages)
-	if err != nil {
-		panic(e)
+	for _, tokenID := range tokenIDs {
+		e := submitKeyimages(tokenID, "testacc", decryptedKeyimages[tokenID])
+		if err != nil {
+			panic(e)
+		}
 	}
 
 	return coinUpdated, nil

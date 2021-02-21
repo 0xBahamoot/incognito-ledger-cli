@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -13,6 +14,20 @@ import (
 
 	"github.com/gorilla/websocket"
 )
+
+func getDaemonVersion() (string, error) {
+	resp, err := http.Get("http://" + COINDAEMONADDR + "/getaccountlist")
+	if err != nil {
+		log.Fatalln(err)
+		return "", nil
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalln(err)
+		return "", nil
+	}
+	return string(body), nil
+}
 
 func getAccountList() (map[string]string, error) {
 	result := make(map[string]string)
@@ -112,7 +127,12 @@ type LedgerRequest struct {
 	Data []byte
 }
 
-func requestCreateTx(txjson []byte, n *NanoS) error {
+func requestCreateTx(txjsonFile string) (string, error) {
+	var txID string
+	data, err := ioutil.ReadFile(txjsonFile)
+	if err != nil {
+		panic(err)
+	}
 	c, _, err := websocket.DefaultDialer.Dial("ws://"+COINDAEMONADDR+"/createtx", nil)
 	if err != nil {
 		log.Fatal("dial:", err)
@@ -124,9 +144,17 @@ func requestCreateTx(txjson []byte, n *NanoS) error {
 
 	sendMsgCh := make(chan []byte)
 	done := make(chan struct{})
+	var nanos *NanoS
+
+	nanos, err = OpenNanoS()
+	if err != nil {
+		log.Println("This cmd require connected to ledger device")
+		log.Fatalln("Couldn't open device:", err)
+	}
 
 	go func() {
-		sendMsgCh <- txjson
+		fmt.Println("sendMsgCh <- data", data)
+		sendMsgCh <- data
 		defer close(done)
 		for {
 			_, message, err := c.ReadMessage()
@@ -143,8 +171,89 @@ func requestCreateTx(txjson []byte, n *NanoS) error {
 			//TODO
 			switch req.Cmd {
 			case "signschnorr":
-			case "createringsig":
+				type ReqStruct struct {
+					PedRandom  []byte
+					PedPrivate []byte
+					Randomness []byte
+					Message    []byte
+				}
+				requestData := ReqStruct{}
+				err := json.Unmarshal(req.Data, &requestData)
+				if err != nil {
+					panic(err)
+				}
+				sig, err := nanos.SignSchnorr(requestData.PedRandom, requestData.PedPrivate, requestData.Randomness, requestData.Message)
+				if err != nil {
+					panic(err)
+				}
+				sendMsgCh <- sig
+			case "genalpha":
+				type ReqStruct struct {
+					AlphaLength int
+				}
+				requestData := ReqStruct{}
+				err := json.Unmarshal(req.Data, &requestData)
+				if err != nil {
+					panic(err)
+				}
+				fmt.Println("genalpha with AlphaLength", requestData.AlphaLength)
+				err = nanos.GenerateAlpha(requestData.AlphaLength)
+				if err != nil {
+					panic(err)
+				}
+				sendMsgCh <- []byte("success")
+			case "gencoinprivate":
+				type ReqStruct struct {
+					CoinsH [][]byte
+				}
+				requestData := ReqStruct{}
+				err := json.Unmarshal(req.Data, &requestData)
+				if err != nil {
+					panic(err)
+				}
+				fmt.Println("gencoinprivate with CoinsH", len(requestData.CoinsH))
+				err = nanos.GenCoinPrivateKey(requestData.CoinsH)
+				if err != nil {
+					panic(err)
+				}
+				sendMsgCh <- []byte("success")
+			case "calculatec": // calculate 1st C
+				type ReqStruct struct {
+					Rpi     [][]byte
+					PedComG []byte
+				}
+				requestData := ReqStruct{}
+				err := json.Unmarshal(req.Data, &requestData)
+				if err != nil {
+					panic(err)
+				}
+				firstC, err := nanos.CalculateFirstC(requestData.Rpi, requestData.PedComG)
+				if err != nil {
+					panic(err)
+				}
+				sendMsgCh <- firstC
+			case "calculater": // calculate r
+				type ReqStruct struct {
+					CoinLength int
+					Cpi        []byte
+				}
+				requestData := ReqStruct{}
+				err := json.Unmarshal(req.Data, &requestData)
+				if err != nil {
+					panic(err)
+				}
+				new_rPi, err := nanos.CalculateR(requestData.CoinLength, requestData.Cpi)
+				if err != nil {
+					panic(err)
+				}
+				new_rPiBytes, err := json.Marshal(new_rPi)
+				if err != nil {
+					panic(err)
+				}
+				sendMsgCh <- new_rPiBytes
 			case "result":
+				fmt.Println(string(req.Data), hex.EncodeToString(req.Data))
+				return
 			default:
 				log.Println("unknown command")
 			}
@@ -153,12 +262,12 @@ func requestCreateTx(txjson []byte, n *NanoS) error {
 	for {
 		select {
 		case <-done:
-			return nil
+			return txID, nil
 		case msg := <-sendMsgCh:
 			err := c.WriteMessage(websocket.TextMessage, msg)
 			if err != nil {
 				log.Println("write:", err)
-				return err
+				return txID, err
 			}
 		case <-interrupt:
 			log.Println("interrupt")
@@ -168,13 +277,13 @@ func requestCreateTx(txjson []byte, n *NanoS) error {
 			err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 			if err != nil {
 				log.Println("write close:", err)
-				return err
+				return txID, err
 			}
 			select {
 			case <-done:
 			case <-time.After(time.Second):
 			}
-			return nil
+			return txID, nil
 		}
 	}
 }

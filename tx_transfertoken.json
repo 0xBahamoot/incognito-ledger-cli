@@ -1,5 +1,24 @@
 {
     "account": "testacc",
-    "type": "transfertoken",
-    "params":""
+    "type": "transfer_token",
+    "privatekey":"111111bgk2j6vZQvzq8tkonDLLXEvLkMwBMn5BoLXLpf631boJnPDGEQMGvA1pRfT71Crr7MM2ShvpkxCBWBL2icG22cXSpcKybKCQmaxa",
+    "params":[
+        {},
+        -1,
+        1,
+        {
+            "Privacy": true,
+            "TokenID": "085ee47e06375857c76c382b67c2f9084fd478353e1a84f5c14ff3a3ebc287a3",
+            "TokenName": "",
+            "TokenSymbol": "",
+            "TokenTxType": 1,
+            "TokenAmount": 0,
+            "TokenReceivers": {
+                "12siFeyX5bXh9UmvcN9sZxdE4N2LSvaJHKf1CCNyxFUm2nLWfuBCn3Tat8sSn76JLiaWdkLjHW1DiEpeiczmpNaiBThvhu2QzGMAFkSbdaUYuVaqmrFjwhpQ7zNgKbFGfnoBEchUVpQ3RvTDoCqo": 80000
+            },
+            "TokenFee": 0
+        },
+        "",
+        1
+    ]
 }
