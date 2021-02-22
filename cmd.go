@@ -205,6 +205,9 @@ func (n *NanoS) GetValidatorKey() error {
 
 func (n *NanoS) SignSchnorr(pedRandom []byte, pedPrivate []byte, randomness []byte, message []byte) ([]byte, error) {
 	buf := new(bytes.Buffer)
+	if pedRandom == nil {
+		pedRandom = make([]byte, 32)
+	}
 	buf.Write(pedRandom)
 	buf.Write(pedPrivate)
 	buf.Write(randomness)

@@ -3,8 +3,9 @@ module main
 go 1.13
 
 require (
+	github.com/0xkumi/incognito-dev-framework v0.0.0-20210127050012-71404660c31d // indirect
 	github.com/gorilla/websocket v1.4.2
-	github.com/incognitochain/incognito-chain v0.0.0-00010101000000-000000000000
+	github.com/incognitochain/incognito-chain v0.0.0-20201229061112-f61b51f89ddd
 	github.com/zondax/hid v0.9.0
 	lukechampine.com/flagg v1.1.1
 )

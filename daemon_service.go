@@ -168,7 +168,6 @@ func requestCreateTx(txjsonFile string) (string, error) {
 				log.Println("read:", err)
 				return
 			}
-			//TODO
 			switch req.Cmd {
 			case "signschnorr":
 				type ReqStruct struct {

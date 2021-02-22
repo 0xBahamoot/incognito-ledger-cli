@@ -161,7 +161,9 @@ func main() {
 			log.Fatalln(err)
 		}
 	case signSchnorrCmd:
-		r := new(privacy.Scalar).FromUint64(1)
+		acc0, _ := account.NewAccountFromPrivatekey("111111bgk2j6vZQvzq8tkonDLLXEvLkMwBMn5BoLXLpf631boJnPDGEQMGvA1pRfT71Crr7MM2ShvpkxCBWBL2icG22cXSpcKybKCQmaxa")
+
+		r := new(privacy.Scalar).FromUint64(0)
 		pedRandom := operation.PedCom.G[operation.PedersenRandomnessIndex].GetKey()
 		pedPrivate := operation.PedCom.G[operation.PedersenPrivateKeyIndex].GetKey()
 		message := "testasfdgtestasfdgfgfdgfgtestasfdgfgfdgtestasfdgfgfdgtestasfdgfgfdgfdg"
@@ -170,15 +172,15 @@ func main() {
 		if err != nil {
 			log.Fatalln(err)
 		}
-		fmt.Println("resp", resp)
+		fmt.Println("resp", resp, len(resp))
 
-		acc0, _ := account.NewAccountFromPrivatekey("111111bgk2j6vZQvzq8tkonDLLXEvLkMwBMn5BoLXLpf631boJnPDGEQMGvA1pRfT71Crr7MM2ShvpkxCBWBL2icG22cXSpcKybKCQmaxa")
 		//verify
 		verifyKey := new(privacy.SchnorrPublicKey)
 		metaSigPublicKey, err := new(privacy.Point).FromBytesS(acc0.Keyset.PaymentAddress.Pk)
 		if err != nil {
 			panic(err)
 		}
+		metaSigPublicKey.Add(metaSigPublicKey, new(operation.Point).ScalarMult(operation.PedCom.G[operation.PedersenRandomnessIndex], r))
 		verifyKey.Set(metaSigPublicKey)
 
 		signature := new(privacy.SchnSignature)
@@ -186,7 +188,6 @@ func main() {
 			panic(err)
 		}
 		fmt.Println("verify sig", verifyKey.Verify(signature, hash.Bytes()))
-
 	case trustHostCmd:
 		err := nanos.TrustHost()
 		if err != nil {
