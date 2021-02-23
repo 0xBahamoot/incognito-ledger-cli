@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/binary"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -22,9 +21,9 @@ func (n *NanoS) GetVersion() (version string, err error) {
 	return fmt.Sprintf("v%d.%d.%d", resp[0], resp[1], resp[2]), nil
 }
 
-func (n *NanoS) GetAddress(index uint32) (addr string, err error) {
-	encIndex := make([]byte, 4)
-	binary.LittleEndian.PutUint32(encIndex, index)
+func (n *NanoS) GetAddress() (addr string, err error) {
+	// encIndex := make([]byte, 4)
+	// binary.LittleEndian.PutUint32(encIndex, index)
 
 	resp, err := n.Exchange(cmdGetAddress, 0, 0, nil)
 	if err != nil {
@@ -35,11 +34,8 @@ func (n *NanoS) GetAddress(index uint32) (addr string, err error) {
 	return
 }
 
-func (n *NanoS) GetPrivateKey(index uint32) (priv string, err error) {
-	encIndex := make([]byte, 4)
-	binary.LittleEndian.PutUint32(encIndex, index)
-
-	resp, err := n.Exchange(cmdGetPrivateKey, 0, p2DisplayAddress, encIndex)
+func (n *NanoS) GetPrivateKey() (priv string, err error) {
+	resp, err := n.Exchange(cmdGetPrivateKey, 0, 0, nil)
 	if err != nil {
 		return
 	}
@@ -48,24 +44,22 @@ func (n *NanoS) GetPrivateKey(index uint32) (priv string, err error) {
 	return
 }
 
-func (n *NanoS) GetViewKey() error {
+func (n *NanoS) GetViewKey() (string, error) {
 	resp, err := n.Exchange(cmdGetViewKey, 0, 0, nil)
 	if err != nil {
-		return err
+		return "", err
 	}
-	fmt.Printf("viewkey: %v", resp)
-	// fmt.Println("viewkey:", string(resp[:]))
-	return nil
+	fmt.Printf("viewkey: %v\n", resp)
+	return hex.EncodeToString(resp), nil
 }
 
-func (n *NanoS) GetOTAKey() error {
+func (n *NanoS) GetOTAKey() (string, error) {
 	resp, err := n.Exchange(cmdGetOTAKey, 0, 0, nil)
 	if err != nil {
-		return err
+		return "", err
 	}
 	fmt.Printf("ota: %v\n", resp)
-	// fmt.Println("viewkey:", string(resp[:]))
-	return nil
+	return hex.EncodeToString(resp), nil
 }
 
 func (n *NanoS) ImportPrivateKey() error {
@@ -231,13 +225,14 @@ func (n *NanoS) TrustHost() error {
 	return nil
 }
 
-func updateBalanceFlow(account string) (int, error) {
+func requestUpdateBalance(account string) (int, error) {
 	nanos, err := OpenNanoS()
 	if err != nil {
 		log.Println("This cmd require connected to ledger device")
 		log.Fatalln("Couldn't open device:", err)
 	}
 	var coinUpdated int
+	fmt.Println("getting coin to decrypt...")
 	keyimages, err := getEncryptKeyImages(account)
 	if err != nil {
 		return 0, err

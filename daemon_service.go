@@ -118,7 +118,43 @@ func getAccountBalance(accountName string) (map[string]uint64, error) {
 	return result.Balance, nil
 }
 
-func importAccount() error {
+func importAccount(name, addr, otaKey, viewKey string) error {
+	type API_import_account_req struct {
+		AccountName    string
+		PaymentAddress string
+		OTAKey         string
+		Viewkey        string
+	}
+
+	reqdata := API_import_account_req{
+		AccountName:    name,
+		OTAKey:         otaKey,
+		Viewkey:        viewKey,
+		PaymentAddress: addr,
+	}
+	reqBytes, err := json.Marshal(reqdata)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("reqBytes", string(reqBytes))
+	// 12su5Urq6hucGGNEdk37RXJW1mY2LAGcrgjdYJ4uhzj9K4F47SRFSkLSzCcz7uJ2mAUTwnrA5mkaCvzobTc6ceocdNAhRQgZeveaLQmMkxJqueSYm9gKkNV39ba1CvR5n3Euig9gNLeP1TkwonfZ
+	// 131iy88imFE4QUxJP8bURMkTf9B1YTwETcXWRvLRX9XmPD4ABG8wWk2YHJi5QkMURcp7HYPeRvpsD4h75mJcKaBec5A8RjQCZAm1FXn6oJZ59XW6DP54VZF
+	req, err := http.NewRequest("POST", "http://"+COINDAEMONADDR+"/importaccount", bytes.NewBuffer(reqBytes))
+	if err != nil {
+		panic(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+	fmt.Println("response Status:", resp.Status)
+	fmt.Println("response Headers:", resp.Header)
+	body, _ := ioutil.ReadAll(resp.Body)
+	fmt.Println("response Body:", string(body))
 	return nil
 }
 

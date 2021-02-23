@@ -47,6 +47,7 @@ Generates an address using the public key with the specified index.
 	getBalanceUsage    = ``
 	updateBalanceUsage = ``
 	createTxUsage      = ``
+	importAccountUsage = ``
 )
 
 func main() {
@@ -68,10 +69,11 @@ func main() {
 	getBalanceCmd := flagg.New("getbalance", getBalanceUsage)
 	updateBalanceCmd := flagg.New("updatebalance", updateBalanceUsage)
 	createTxCmd := flagg.New("createtx", createTxUsage)
+	importAccountCmd := flagg.New("importacc", importAccountUsage)
 	cmd := flagg.Parse(flagg.Tree{
 		Cmd: rootCmd,
 		Sub: []flagg.Tree{
-			{Cmd: versionCmd},
+			// direct ledger cmd
 			{Cmd: addrCmd},
 			{Cmd: privCmd},
 			{Cmd: getViewKeyCmd},
@@ -81,10 +83,14 @@ func main() {
 			{Cmd: getOTAKeyCmd},
 			{Cmd: signSchnorrCmd},
 			{Cmd: trustHostCmd},
+
+			// actual cmd
+			{Cmd: versionCmd},
 			{Cmd: listAccountCmd},
 			{Cmd: getBalanceCmd},
 			{Cmd: updateBalanceCmd},
 			{Cmd: createTxCmd},
+			{Cmd: importAccountCmd},
 		},
 	})
 	args := cmd.Args()
@@ -121,11 +127,7 @@ func main() {
 		fmt.Println("Nano S app version:", appVersion)
 		fmt.Printf("CoinDaemon version: %s\n", CLI_version)
 	case addrCmd:
-		if len(args) != 1 {
-			addrCmd.Usage()
-			return
-		}
-		addr, err := nanos.GetAddress(parseIndex(args[0]))
+		addr, err := nanos.GetAddress()
 		if err != nil {
 			log.Fatalln("Couldn't get address:", err)
 		}
@@ -135,23 +137,23 @@ func main() {
 			privCmd.Usage()
 			return
 		}
-		priv, err := nanos.GetPrivateKey(parseIndex(args[0]))
+		priv, err := nanos.GetPrivateKey()
 		if err != nil {
 			log.Fatalln("Couldn't get address:", err)
 		}
 		fmt.Println(priv)
 	case getViewKeyCmd:
-		err := nanos.GetViewKey()
+		_, err := nanos.GetViewKey()
 		if err != nil {
 			log.Fatalln(err)
 		}
-	case importPrivateKeyCmd:
-		err := nanos.ImportPrivateKey()
-		if err != nil {
-			log.Fatalln(err)
-		}
+	// case importPrivateKeyCmd:
+	// 	_, err := nanos.ImportPrivateKey()
+	// 	if err != nil {
+	// 		log.Fatalln(err)
+	// 	}
 	case getOTAKeyCmd:
-		err := nanos.GetValidatorKey()
+		_, err := nanos.GetOTAKey()
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -193,6 +195,8 @@ func main() {
 		if err != nil {
 			log.Fatalln(err)
 		}
+
+	// acutal cmd
 	case listAccountCmd:
 		result, err := getAccountList()
 		if err != nil {
@@ -210,7 +214,7 @@ func main() {
 		fmt.Println(result)
 	case updateBalanceCmd:
 		account := args[0]
-		result, err := updateBalanceFlow(account)
+		result, err := requestUpdateBalance(account)
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -222,5 +226,27 @@ func main() {
 			log.Fatalln(err)
 		}
 		fmt.Println(result)
+	case importAccountCmd:
+		err := nanos.TrustHost()
+		if err != nil {
+			log.Fatalln(err)
+		}
+		accountName := args[0]
+		viewKey, err := nanos.GetViewKey()
+		if err != nil {
+			panic(err)
+		}
+		otaKey, err := nanos.GetOTAKey()
+		if err != nil {
+			panic(err)
+		}
+		addr, err := nanos.GetAddress()
+		if err != nil {
+			log.Fatalln("Couldn't get address:", err)
+		}
+		err = importAccount(accountName, addr, otaKey, viewKey)
+		if err != nil {
+			log.Fatalln(err)
+		}
 	}
 }
