@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/0xkumi/incognito-dev-framework/account"
 	"github.com/incognitochain/incognito-chain/common"
@@ -232,6 +233,14 @@ func main() {
 			log.Fatalln(err)
 		}
 		accountName := args[0]
+		beaconHeight := uint64(0)
+		if len(args) == 2 {
+			var err error
+			beaconHeight, err = strconv.ParseUint(args[1], 0, 64)
+			if err != nil {
+				panic(err)
+			}
+		}
 		viewKey, err := nanos.GetViewKey()
 		if err != nil {
 			panic(err)
@@ -244,7 +253,7 @@ func main() {
 		if err != nil {
 			log.Fatalln("Couldn't get address:", err)
 		}
-		err = importAccount(accountName, addr, otaKey, viewKey)
+		err = importAccount(accountName, addr, otaKey, viewKey, beaconHeight)
 		if err != nil {
 			log.Fatalln(err)
 		}

@@ -87,6 +87,7 @@ func getEncryptKeyImages(accountName string) (map[string]map[string]string, erro
 	if err != nil {
 		log.Fatalln(err)
 	}
+	fmt.Println(resp.StatusCode)
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatalln(err)
@@ -118,12 +119,13 @@ func getAccountBalance(accountName string) (map[string]uint64, error) {
 	return result.Balance, nil
 }
 
-func importAccount(name, addr, otaKey, viewKey string) error {
+func importAccount(name, addr, otaKey, viewKey string, beaconHeight uint64) error {
 	type API_import_account_req struct {
 		AccountName    string
 		PaymentAddress string
 		OTAKey         string
 		Viewkey        string
+		BeaconHeight   uint64
 	}
 
 	reqdata := API_import_account_req{
@@ -131,6 +133,7 @@ func importAccount(name, addr, otaKey, viewKey string) error {
 		OTAKey:         otaKey,
 		Viewkey:        viewKey,
 		PaymentAddress: addr,
+		BeaconHeight:   beaconHeight,
 	}
 	reqBytes, err := json.Marshal(reqdata)
 	if err != nil {
