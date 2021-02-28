@@ -6,8 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-
-	"github.com/incognitochain/incognito-chain/privacy/operation"
 )
 
 func (n *NanoS) GetVersion() (version string, err error) {
@@ -105,16 +103,17 @@ func (n *NanoS) GenKeyImage(coinPubkey string, encryptKm string) (string, error)
 //This func contain a set of commands for ledger
 func (n *NanoS) GenerateAlpha(alphaLength int) error {
 	// tmpAlpha = []*operation.Scalar{}
-	resp, err := n.Exchange(cmdGenAlpha, byte(alphaLength), 0, nil)
+	_, err := n.Exchange(cmdGenAlpha, byte(alphaLength), 0, nil)
 	if err != nil {
 		return err
 	}
-	for i := 0; i < alphaLength; i++ {
-		alpha := operation.Scalar{}
-		alpha.FromBytesS(resp[i*32 : (i+1)*32])
-		fmt.Println("alpha", alpha.ToBytesS())
-		// tmpAlpha = append(tmpAlpha, &alpha)
-	}
+	// fmt.Println(alphaLength, resp)
+	// for i := 0; i < alphaLength; i++ {
+	// 	alpha := operation.Scalar{}
+	// 	alpha.FromBytesS(resp[i*32 : (i+1)*32])
+	// 	fmt.Println("alpha", alpha.ToBytesS())
+	// tmpAlpha = append(tmpAlpha, &alpha)
+	// }
 	// buf := new(bytes.Buffer)
 	// for i := 0; i < alphaLength; i += 1 {
 	// 	alpha := operation.RandomScalar()
