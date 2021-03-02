@@ -119,6 +119,49 @@ func getAccountBalance(accountName string) (map[string]uint64, error) {
 	return result.Balance, nil
 }
 
+func requestUpdateBalance(account string) (int, error) {
+	nanos, err := OpenNanoS()
+	if err != nil {
+		log.Println("This cmd require connected to ledger device")
+		log.Fatalln("Couldn't open device:", err)
+	}
+	var coinUpdated int
+	fmt.Println("getting coin to decrypt...")
+	keyimages, err := getEncryptKeyImages(account)
+	if err != nil {
+		return 0, err
+	}
+	fmt.Println(keyimages)
+
+	err = nanos.TrustHost()
+	if err != nil {
+		return 0, err
+	}
+	decryptedKeyimages := make(map[string]map[string]string)
+	tokenIDs := []string{}
+	for tokenID, coinList := range keyimages {
+		tokenIDs = append(tokenIDs, tokenID)
+		decryptedKeyimages[tokenID] = make(map[string]string)
+		for coinPk, km := range coinList {
+			dekm, err := nanos.GenKeyImage(coinPk, km)
+			if err != nil {
+				panic(err)
+			}
+			decryptedKeyimages[tokenID][coinPk] = dekm
+			fmt.Println("decryptedKeyimages[coinPk]", coinPk, dekm)
+		}
+	}
+
+	for _, tokenID := range tokenIDs {
+		e := submitKeyimages(tokenID, "testacc", decryptedKeyimages[tokenID])
+		if err != nil {
+			panic(e)
+		}
+	}
+
+	return coinUpdated, nil
+}
+
 func importAccount(name, addr, otaKey, viewKey string, beaconHeight uint64) error {
 	type API_import_account_req struct {
 		AccountName    string
@@ -140,8 +183,6 @@ func importAccount(name, addr, otaKey, viewKey string, beaconHeight uint64) erro
 		panic(err)
 	}
 	fmt.Println("reqBytes", string(reqBytes))
-	// 12su5Urq6hucGGNEdk37RXJW1mY2LAGcrgjdYJ4uhzj9K4F47SRFSkLSzCcz7uJ2mAUTwnrA5mkaCvzobTc6ceocdNAhRQgZeveaLQmMkxJqueSYm9gKkNV39ba1CvR5n3Euig9gNLeP1TkwonfZ
-	// 131iy88imFE4QUxJP8bURMkTf9B1YTwETcXWRvLRX9XmPD4ABG8wWk2YHJi5QkMURcp7HYPeRvpsD4h75mJcKaBec5A8RjQCZAm1FXn6oJZ59XW6DP54VZF
 	req, err := http.NewRequest("POST", "http://"+COINDAEMONADDR+"/importaccount", bytes.NewBuffer(reqBytes))
 	if err != nil {
 		panic(err)
@@ -156,9 +197,9 @@ func importAccount(name, addr, otaKey, viewKey string, beaconHeight uint64) erro
 	defer resp.Body.Close()
 	fmt.Println("response Status:", resp.Status)
 	fmt.Println("response Headers:", resp.Header)
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
 	fmt.Println("response Body:", string(body))
-	return nil
+	return err
 }
 
 type LedgerRequest struct {
@@ -280,15 +321,15 @@ func requestCreateTx(txjsonFile string) (string, error) {
 				if err != nil {
 					panic(err)
 				}
-				new_rPi, err := nanos.CalculateR(requestData.CoinLength, requestData.Cpi)
+				new_rPi, err = nanos.CalculateR(requestData.CoinLength, requestData.Cpi)
 				if err != nil {
 					panic(err)
 				}
-				new_rPiBytes, err := json.Marshal(new_rPi)
+				rPiBytes, err := json.Marshal(new_rPi)
 				if err != nil {
 					panic(err)
 				}
-				sendMsgCh <- new_rPiBytes
+				sendMsgCh <- rPiBytes
 			case "result":
 				fmt.Println(string(req.Data), hex.EncodeToString(req.Data))
 				return
