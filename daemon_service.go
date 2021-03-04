@@ -321,7 +321,7 @@ func requestCreateTx(txjsonFile string) (string, error) {
 				if err != nil {
 					panic(err)
 				}
-				new_rPi, err = nanos.CalculateR(requestData.CoinLength, requestData.Cpi)
+				new_rPi, err := nanos.CalculateR(requestData.CoinLength, requestData.Cpi)
 				if err != nil {
 					panic(err)
 				}

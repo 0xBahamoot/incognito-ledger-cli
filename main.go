@@ -224,7 +224,7 @@ func main() {
 
 	//for dev-use only
 	case importPrivateKeyCmd:
-		_, err := nanos.ImportPrivateKey()
+		err := nanos.ImportPrivateKey()
 		if err != nil {
 			log.Fatalln(err)
 		}

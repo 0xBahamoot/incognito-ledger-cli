@@ -110,8 +110,6 @@ func (n *NanoS) GenKeyImage(coinPubkey string, encryptKm string) (string, error)
 	return hex.EncodeToString(resp), nil
 }
 
-// var tmpAlpha = []*operation.Scalar{}
-
 //This func contain a set of commands for ledger
 func (n *NanoS) GenerateAlpha(alphaLength int) error {
 	_, err := n.Exchange(cmdGenAlpha, byte(alphaLength), 0, nil)
