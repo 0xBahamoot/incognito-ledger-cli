@@ -46,9 +46,9 @@ Generates an address using the public key with the specified index.
 	updateBalanceUsage = ``
 	createTxUsage      = ``
 	importAccountUsage = ``
+	switchkeyUsage     = ``
 
 	privUsage        = ``
-	importPrivUsage  = ``
 	genKeyImageUsage = ``
 	signSchnorrUsage = ``
 	benchmarkUsage   = ``
@@ -70,17 +70,17 @@ func main() {
 	updateBalanceCmd := flagg.New("updatebalance", updateBalanceUsage)
 	createTxCmd := flagg.New("createtx", createTxUsage)
 	importAccountCmd := flagg.New("importacc", importAccountUsage)
+	switchKeyCmd := flagg.New("switchkey", switchkeyUsage)
 
 	benchmarkCmd := flagg.New("benchmark", benchmarkUsage)
 	privCmd := flagg.New("priv", privUsage)
-	importPrivateKeyCmd := flagg.New("importpriv", importPrivUsage)
 	genKeyImageCmd := flagg.New("genkeyimage", genKeyImageUsage)
 	signSchnorrCmd := flagg.New("signschnorr", signSchnorrUsage)
 
 	cmd := flagg.Parse(flagg.Tree{
 		Cmd: rootCmd,
 		Sub: []flagg.Tree{
-			// actual cmd
+			// user cmd
 			{Cmd: trustHostCmd},
 			{Cmd: versionCmd},
 			{Cmd: addrCmd},
@@ -92,10 +92,10 @@ func main() {
 			{Cmd: updateBalanceCmd},
 			{Cmd: createTxCmd},
 			{Cmd: importAccountCmd},
+			{Cmd: switchKeyCmd},
 
-			// dev ledger cmd
+			// dev cmd
 			{Cmd: privCmd},
-			{Cmd: importPrivateKeyCmd},
 			{Cmd: genKeyImageCmd},
 			{Cmd: signSchnorrCmd},
 			{Cmd: benchmarkCmd},
@@ -221,13 +221,13 @@ func main() {
 		if err != nil {
 			log.Fatalln(err)
 		}
-
-	//for dev-use only
-	case importPrivateKeyCmd:
-		err := nanos.ImportPrivateKey()
+	case switchKeyCmd:
+		err := nanos.SwitchKey()
 		if err != nil {
 			log.Fatalln(err)
 		}
+
+	//for dev-use only
 	case privCmd:
 		if len(args) != 1 {
 			privCmd.Usage()

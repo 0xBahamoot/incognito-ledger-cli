@@ -77,12 +77,12 @@ func (n *NanoS) GetValidatorKey() error {
 	return nil
 }
 
-func (n *NanoS) ImportPrivateKey() error {
+func (n *NanoS) SwitchKey() error {
 	buf := new(bytes.Buffer)
 
-	bs, _ := hex.DecodeString("00000000000214666ccc56b88d4d8d3f5fae61f1f06d9620327fe259157272016dfe54ef6fef20a408be78955356a9d3aef1729c6d83d32f91ea84cf21a974d2d9d791d71e1c06")
+	bs, _ := hex.DecodeString("")
 	buf.Write(bs)
-	resp, err := n.Exchange(cmdImportPrivateKey, 0, 0, buf.Next(255))
+	resp, err := n.Exchange(cmdSwitchKey, 0, 0, buf.Next(255))
 	if err != nil {
 		return err
 	}

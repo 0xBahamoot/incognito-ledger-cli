@@ -11,14 +11,14 @@ var (
 )
 
 const (
-	cmdGetVersion       = 0x01
-	cmdGetAddress       = 0x02
-	cmdGetViewKey       = 0x03
-	cmdGetPrivateKey    = 0x04
-	cmdImportPrivateKey = 0x05
-	cmdGetOTAKey        = 0x06
-	cmdGetValidatorKey  = 0x07
-	cmdKeyImage         = 0x10
+	cmdGetVersion      = 0x01
+	cmdGetAddress      = 0x02
+	cmdGetViewKey      = 0x03
+	cmdGetPrivateKey   = 0x04
+	cmdSwitchKey       = 0x05
+	cmdGetOTAKey       = 0x06
+	cmdGetValidatorKey = 0x07
+	cmdKeyImage        = 0x10
 	// gen ring sig cmds set
 	cmdGenAlpha          = 0x21
 	cmdCalculateC        = 0x22
